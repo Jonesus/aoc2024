@@ -1,0 +1,37 @@
+{
+	"name": "Advent of Code 2024",
+	"build": { "dockerfile": "Dockerfile", "context": ".." },
+
+	"features": {
+		"ghcr.io/va-h/devcontainers-features/difftastic:1": {},
+		"ghcr.io/eitsupi/devcontainer-features/jq-likes:2": {
+		  "jqVersion": "latest",
+		  "yqVersion": "latest"
+		},
+
+        "ghcr.io/devcontainers-extra/features/gleam:1": {}
+
+	},
+
+	"mounts": [
+		// Mount bash aliases
+		{
+			"source": "${env:HOME}${env:USERPROFILE}/.bash_aliases",
+			"target": "/home/vscode/.bash_aliases",
+			"type": "bind"
+		},
+		// bash history
+		"source=hematoscope-infra-bashhistory,target=/commandhistory"
+	],
+
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"usernamehw.errorlens",
+				"eamodio.gitlens",
+				"tamasfe.even-better-toml",
+                "Gleam.gleam"
+			]
+		}
+	}
+}
