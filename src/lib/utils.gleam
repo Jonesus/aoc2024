@@ -1,5 +1,4 @@
 import gleam/int
-import gleam/io
 import gleam/list
 import gleam/string
 import simplifile
@@ -21,10 +20,4 @@ pub fn string_to_ints(str: String) {
       _ -> panic as "lol"
     }
   })
-}
-
-/// Prints the `string.inspect` value of given argument and returns the same value
-pub fn debug(x: a) {
-  io.println(string.inspect(x))
-  x
 }
