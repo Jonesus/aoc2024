@@ -9,8 +9,8 @@ const filepath = "./src/day01/input.txt"
 pub fn get_lists(contents: String) {
   contents
   |> string.split(on: "\n")
-  |> list.map(fn(line) { string.split(line, on: " ") })
-  |> list.map(fn(pair) { list.filter(pair, fn(x) { x != "" }) })
+  |> list.map(string.split(_, on: " "))
+  |> list.map(list.filter(_, fn(x) { x != "" }))
   |> list.map(fn(pair) {
     let parsed = case pair {
       [a, b] -> #(int.parse(a), int.parse(b))
