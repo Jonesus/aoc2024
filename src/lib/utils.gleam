@@ -1,4 +1,5 @@
 import gleam/int
+import gleam/io
 import gleam/list
 import gleam/string
 import simplifile
@@ -25,4 +26,12 @@ pub fn string_to_ints(str: String) {
 /// This function applies a functor to each item in a nested list
 pub fn deep_map(xs: List(List(a)), applicator: fn(a) -> b) -> List(List(b)) {
   list.map(xs, list.map(_, applicator))
+}
+
+/// This function takes in a list of ints and prints out their sum
+pub fn print_sum(x: List(Int)) {
+  x
+  |> int.sum
+  |> int.to_string
+  |> io.println
 }
