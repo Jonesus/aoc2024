@@ -1,3 +1,4 @@
+import gleam/dict
 import gleam/int
 import gleam/io
 import gleam/list
@@ -34,4 +35,30 @@ pub fn print_sum(x: List(Int)) {
   |> int.sum
   |> int.to_string
   |> io.println
+}
+
+/// A pair representing some coordinate in the form of Y,X
+pub type Coordinate =
+  #(Int, Int)
+
+/// Dict representing a 2D grid of single characters, where the key is a
+/// pair of Y,X coordinates and the value is any single character
+pub type Map =
+  dict.Dict(Coordinate, String)
+
+/// Reads a file that consists of a 2D grid of single characters, and returns
+/// a dict with keys for each coordinate pair and values of the characters
+pub fn get_map(filename: String) -> Map {
+  filename
+  |> file_to_lines
+  |> list.map(string.to_graphemes)
+  |> list.index_fold(dict.new(), fn(acc, curr, j) {
+    let indexed =
+      list.zip(
+        list.repeat(j, times: list.length(curr)),
+        list.range(0, list.length(curr) - 1),
+      )
+    acc
+    |> dict.merge(dict.from_list(list.zip(indexed, curr)))
+  })
 }
