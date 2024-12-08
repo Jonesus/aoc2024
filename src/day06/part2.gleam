@@ -1,20 +1,18 @@
 import day06/part1
-import gleam/erlang/process
+import gleam/otp/task
+import gleam/set
 
-import gleam/bool
 import gleam/dict
-import gleam/function
 import gleam/int
 import gleam/io
 import gleam/list
-import gleam/order
 import gleam/pair
 import gleam/string
 import lib/utils
 
 const filepath = "./src/day06/input.txt"
 
-fn debug(map: utils.Map, g: part1.Guard) {
+pub fn debug(map: utils.Map, g: part1.Guard) {
   map
   |> dict.to_list
   |> list.map(fn(x) {
@@ -52,58 +50,37 @@ fn debug(map: utils.Map, g: part1.Guard) {
 fn travel(
   map: utils.Map,
   g: part1.Guard,
-  turns: List(utils.Coordinate),
-  blocks: List(utils.Coordinate),
-) -> List(utils.Coordinate) {
-  debug(map, g)
-  process.sleep(100)
+  visited: List(part1.Guard),
+) -> List(part1.Guard) {
   let target_pos = part1.get_next_pos(g)
   case dict.get(map, target_pos) {
-    Error(_) -> blocks
-    Ok("#") -> travel(map, part1.turn(g), [g.0, ..turns], blocks)
+    Error(_) -> visited
+    Ok("#") -> travel(map, part1.turn(g), visited)
+    Ok(_) ->
+      travel(map, part1.move_forward(g), [part1.move_forward(g), ..visited])
+  }
+}
+
+fn check_loops(
+  map: utils.Map,
+  g: part1.Guard,
+  visited: set.Set(part1.Guard),
+) -> Bool {
+  //debug(map, g)
+  let target_pos = part1.get_next_pos(g)
+  let again = set.contains(visited, part1.turn(g))
+  case dict.get(map, target_pos) {
+    Error(_) -> False
+    Ok("O") if again -> True
+    Ok("#") | Ok("O") -> {
+      check_loops(map, part1.turn(g), set.insert(visited, part1.turn(g)))
+    }
     Ok(_) -> {
-      let relevant =
-        list.range(0, list.length(turns) - 1)
-        |> list.zip(turns)
-        |> list.filter(fn(x) { x.0 % 4 == 2 })
-        |> list.map(pair.second)
-      let new_blocks = case g.1 {
-        part1.Left | part1.Right -> {
-          case list.map(relevant, pair.second) |> list.contains(target_pos.1) {
-            True -> {
-              //debug(map, part1.move_forward(g))
-              //io.debug(turns)
-              //io.debug(relevant)
-              //io.debug("\n")
-              map
-              |> dict.insert(part1.move_forward(part1.move_forward(g)).0, "O")
-              |> debug(part1.move_forward(g))
-              process.sleep(2000)
-
-              [part1.move_forward(part1.move_forward(g)).0, ..blocks]
-            }
-            False -> blocks
-          }
-        }
-        part1.Up | part1.Down -> {
-          case list.map(relevant, pair.first) |> list.contains(target_pos.0) {
-            True -> {
-              //debug(map, part1.move_forward(g))
-              //io.debug(turns)
-              //io.debug(relevant)
-              //io.debug("\n")
-              map
-              |> dict.insert(part1.move_forward(part1.move_forward(g)).0, "O")
-              |> debug(part1.move_forward(g))
-              process.sleep(2000)
-
-              [part1.move_forward(part1.move_forward(g)).0, ..blocks]
-            }
-            False -> blocks
-          }
-        }
-      }
-      travel(map, part1.move_forward(g), turns, new_blocks)
+      check_loops(
+        map,
+        part1.move_forward(g),
+        set.insert(visited, part1.move_forward(g)),
+      )
     }
   }
 }
@@ -120,9 +97,32 @@ pub fn main() {
       }
     })
 
-  travel(map, #(start, part1.Up), [], [])
-  |> list.unique
+  let start_guard = #(start, part1.Up)
+
+  let visited = travel(map, start_guard, [start_guard])
+
+  let blocked_maps =
+    visited
+    |> list.map(pair.first)
+    |> list.unique
+    |> list.filter(fn(x) { x != start })
+    |> list.map(fn(x) { dict.insert(map, x, "O") })
+
+  blocked_maps
+  |> list.reverse
+  |> list.map(fn(x) {
+    task.async(fn() {
+      check_loops(x, start_guard, set.from_list([start_guard]))
+    })
+  })
+  |> list.map(task.try_await(_, 1))
+  |> list.filter(fn(x) {
+    case x {
+      Ok(res) -> res
+      Error(_) -> True
+    }
+  })
   |> list.length
   |> int.to_string
-  //|> io.println
+  |> io.println
 }
