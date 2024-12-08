@@ -62,3 +62,10 @@ pub fn get_map(filename: String) -> Map {
     |> dict.merge(dict.from_list(list.zip(indexed, curr)))
   })
 }
+
+/// Transform a list of items into a list of pairs with first element as index
+/// and second element as the original element
+pub fn index(l: List(a)) -> List(#(Int, a)) {
+  list.range(0, list.length(l) - 1)
+  |> list.zip(l)
+}
